@@ -18,7 +18,7 @@ def log(module,msg):
 #---
 #-  xbmc.output("### [%s-%s] - %s" % (__scriptname__,module,msg,),level=xbmc.LOGDEBUG )
 #+++
-  pass
+  print "### [%s-%s] - %s" % ("",module,msg,)
 #+++ 
 
 ###-------------------------  Hash  -----------------###############

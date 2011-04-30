@@ -8,6 +8,8 @@ import sys
 
 
 from Components.config import config
+from Components.config import ConfigSelection
+from Components.config import ConfigSubsection
 from Screens.ChoiceBox import ChoiceBox
 
 from DMC_SubtitleDownloaderExtras.utilities import *
@@ -33,27 +35,58 @@ except:
 	printl("Is not available", "DMC_SubtitleDownloader")
 	gAvailable = False
 
+config.plugins.pvmc.plugins.subdown          = ConfigSubsection()
+
+if gAvailable:
+	langs = []
+	langs.append("None")
+	
+	for i in range(0, 43):
+		langs.append(toScriptLang(str(i)))
+	langs.append("All")
+	
+	config.plugins.pvmc.plugins.subdown.language1  = ConfigSelection(default="German", choices = langs)
+	config.plugins.pvmc.plugins.subdown.language2  = ConfigSelection(default="English", choices = langs)
+	config.plugins.pvmc.plugins.subdown.language3  = ConfigSelection(default="None", choices = langs)
+	
+	service_list = []
+	for name in os.listdir(config.plugins.pvmc.pluginfolderpath.value + "DMC_Plugins/DMC_SubtitleDownloaderExtras/services"):
+		if os.path.isdir(os.path.join(config.plugins.pvmc.pluginfolderpath.value + "DMC_Plugins/DMC_SubtitleDownloaderExtras/services", name)):
+			service_list.append( name )
+	config.plugins.pvmc.plugins.subdown.provider  = ConfigSelection(default="OpenSubtitles", choices = service_list)
+
+def settings():
+	s = []
+	s.append((_("Provider"),  config.plugins.pvmc.plugins.subdown.provider, ))
+	s.append((_("Language1"), config.plugins.pvmc.plugins.subdown.language1, ))
+	s.append((_("Language2"), config.plugins.pvmc.plugins.subdown.language2, ))
+	s.append((_("Language3"), config.plugins.pvmc.plugins.subdown.language3, ))
+	return s
+
+
 class DMC_SubtitleDownloader(ChoiceBox):
 	service = "OpenSubtitles"
 
 	def __init__(self, session, args):
 		self.session = session
 		
-		year = args["Year"]
-		title = args["Title"]
+		self.service = config.plugins.pvmc.plugins.subdown.provider.value
+		
+		year = str(args["Year"])
+		title = args["Title"] # + " (" + str(year) + ")"
 		if args.has_key("Season"):
-			season = args["Season"]
-			episode = args["Episode"]
-			tvshow = self.title
+			season = str(args["Season"])
+			episode = str(args["Episode"])
+			tvshow = title
 		else:
 			season = ""
 			episode = ""
 			tvshow = ""
 		
 		
-		self.language_1 = "English"
-		self.language_2 = "German"
-		self.language_3 = "None"
+		self.language_1 = config.plugins.pvmc.plugins.subdown.language1.value
+		self.language_2 = config.plugins.pvmc.plugins.subdown.language2.value
+		self.language_3 = config.plugins.pvmc.plugins.subdown.language3.value
 		
 		self.file_original_path = args["Path"]
 		set_temp = False
@@ -75,7 +108,13 @@ class DMC_SubtitleDownloader(ChoiceBox):
 		
 		subtitleList = []
 		for subtitle in self.subtitles_list:
-			subtitleList.append((utf8ToLatin(subtitle["filename"]), "CALLFUNC", self.Download_Subtitles, subtitle))
+			print subtitle
+			lang = ""
+			if subtitle.has_key("language_id"):
+				lang = utf8ToLatin(subtitle["language_id"])
+			elif subtitle.has_key("language_name"):
+				lang = utf8ToLatin(subtitle["language_name"])
+			subtitleList.append(("[" + lang + "] " + utf8ToLatin(subtitle["filename"]), "CALLFUNC", self.Download_Subtitles, subtitle))
 		
 		ChoiceBox.__init__(self, self.session, list = subtitleList, title = self.file_original_path)
 
@@ -152,13 +191,11 @@ class DMC_SubtitleDownloader(ChoiceBox):
 						subtitle_file, file_path = self.create_name(zip_entry,sub_filename,subtitle_lang)
 						shutil.copy(subtitle_file, file_path)
 						#subtitle_set,file_path  = self.copy_files( subtitle_file, file_path )            
-
+		
 		try:
 			shutil.rmtree(str(self.tmp_sub_dir))
 		except:
 			pass
-      #xbmc.Player().setSubtitles(file_path)
-
 
 	def create_name(self,zip_entry,sub_filename,subtitle_lang):
 		sub_ext  = os.path.splitext( zip_entry )[1]
@@ -168,6 +205,7 @@ class DMC_SubtitleDownloader(ChoiceBox):
 		subtitle_file = os.path.join(self.tmp_sub_dir, zip_entry)
 		return subtitle_file, file_path
 
+
 gsubdown = None
 
 def autostart(session):
@@ -175,6 +213,6 @@ def autostart(session):
 
 if gAvailable is True:
 	printl("Is available", __name__)
-	#registerPlugin(Plugin(name=_("trakt.tv"), fnc=settings, where=Plugin.SETTINGS))
-	registerPlugin(Plugin(name=_("SubtitleDownloader"), fnc=autostart, where=Plugin.AUTOSTART))
+	registerPlugin(Plugin(name=_("SubtitleDownloader"), fnc=settings, where=Plugin.SETTINGS))
+	#registerPlugin(Plugin(name=_("SubtitleDownloader"), fnc=autostart, where=Plugin.AUTOSTART))
 	registerPlugin(Plugin(name=_("Download subtitles"), start=DMC_SubtitleDownloader, where=Plugin.MENU_MOVIES_PLUGINS))

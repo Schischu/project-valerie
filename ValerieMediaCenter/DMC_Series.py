@@ -145,6 +145,7 @@ class PVMC_Series(Screen, HelpableScreen):
 				"up_first": (self.up_quick, "List up"),
 				"down_first": (self.down_quick, "List down"),
 				"info": (self.KeyInfo, "show Plot"),
+				"menu": (self.KeyPlugins, "show Plugins"),
 			}, -2)
 		
 		if self.USE_DB_VERSION == self.DB_TXT:
@@ -722,5 +723,29 @@ class PVMC_Series(Screen, HelpableScreen):
 		elif self.inSeries is True:
 			if selection is not None:
 				self.session.open(MessageBox, _("Title:\n") + self.moviedb[selection[1]]["Title"] + _("\n\nPlot:\n") + self.moviedb[selection[1]]["Plot"], type = MessageBox.TYPE_INFO)
+
+	def KeyPlugins(self):
+		if self.inEpisode is False:
+			return
+		
+		pluginList = []
+		plugins = getPlugins(where=Plugin.MENU_MOVIES_PLUGINS)
+		for plugin in plugins:
+			pluginList.append((plugin.name, plugin.start, ))
+		
+		if len(pluginList) == 0:
+			pluginList.append((_("No plugins available"), None, ))
+		
+		self.session.openWithCallback(self.KeyPluginsConfirmed, ChoiceBox, title=_("Plugins available"), list=pluginList)
+
+	def KeyPluginsConfirmed(self, choice):
+		if choice is None or choice[1] is None:
+			return
+		
+		selection = self["listview"].getCurrent()
+		if selection is not None and type(selection) != bool:
+			episode = self.episodesdb[selection[1]]
+			episode["Title"] = self.moviedb[episode["TheTvDb"]]["Title"]
+			self.session.open(choice[1], episode)
 
 registerPlugin(Plugin(name=_("TV Shows"), start=PVMC_Series, where=Plugin.MENU_VIDEOS))
