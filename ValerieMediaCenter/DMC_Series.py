@@ -624,7 +624,8 @@ class PVMC_Series(Screen, HelpableScreen):
 						args["type"]    = "tvshow"
 						plugins = getPlugins(where=Plugin.INFO_PLAYBACK)
 						for plugin in plugins:
-							pluginSettingsList = plugin.fnc(args)
+							print plugin.name
+							plugin.fnc(args)
 						
 						isDVD = False
 						dvdFilelist = [ ]
@@ -668,7 +669,7 @@ class PVMC_Series(Screen, HelpableScreen):
 		args["status"] = "stopped"
 		plugins = getPlugins(where=Plugin.INFO_PLAYBACK)
 		for plugin in plugins:
-			pluginSettingsList = plugin.fnc(args) 
+			plugin.fnc(args) 
 		
 		self.currentEpisodeNumber = str(int(self.currentEpisodeNumber) + 1)
 		
@@ -678,14 +679,14 @@ class PVMC_Series(Screen, HelpableScreen):
 		argsNE["status"]  = "playing"
 		plugins = getPlugins(where=Plugin.INFO_PLAYBACK)
 		for plugin in plugins:
-			pluginSettingsList = plugin.fnc(argsNE) 
+			plugin.fnc(argsNE) 
 
 	def leaveMoviePlayer(self): 
 		args = {}
 		args["status"] = "stopped"
 		plugins = getPlugins(where=Plugin.INFO_PLAYBACK)
 		for plugin in plugins:
-			pluginSettingsList = plugin.fnc(args) 
+			plugin.fnc(args) 
 		
 		self.session.nav.playService(None) 
 		self.refresh()

@@ -17,8 +17,8 @@ def loadPlugins(dir, imp):
 		if os.path.isfile(file):
 			pos = f.find(".py")
 			if pos > 0:
-				#printl("f: " + str(f), __name__)
 				f = f[:pos]
+				#printl("f: " + str(f), __name__)
 				if f == "__init__":
 					continue
 				try:
@@ -28,6 +28,7 @@ def loadPlugins(dir, imp):
 					printl("\tf: " + str(f), __name__)
 
 def registerPlugin(plugin):
+	#printl("name=" + str(plugin.name) + " where=" + str(plugin.where), __name__)
 	ps = []
 	if type(plugin) is list:
 		ps = plugin
@@ -35,7 +36,7 @@ def registerPlugin(plugin):
 		ps.append(plugin)
 	for p in ps:
 		if p not in gPlugins:
-			printl("name=" + str(p.name) + " where=" + str(p.where), __name__)
+			printl("registered: name=" + str(p.name) + " where=" + str(p.where), __name__)
 			gPlugins.append(p)
 
 def getPlugins(where=None):
@@ -62,6 +63,8 @@ class Plugin():
 	AUTOSTART = 9
 	
 	SETTINGS = 10
+	
+	MENU_MOVIES_PLUGINS = 11
 	
 	INFO_PLAYBACK = 100
 

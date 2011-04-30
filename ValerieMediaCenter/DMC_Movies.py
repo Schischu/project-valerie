@@ -143,6 +143,7 @@ class PVMC_Movies(Screen, HelpableScreen):
 				"red": (self.KeySort, _("Sort")),
 				"stop": (self.leaveMoviePlayer, "Stop Playback"),
 				"info": (self.KeyInfo, "show Plot"),
+				"menu": (self.KeyPlugins, "show Plugins"),
 			}, -2)
 		
 		self.loadMovies()
@@ -580,5 +581,23 @@ class PVMC_Movies(Screen, HelpableScreen):
 			#self.session.open(self.PVMC_MessageBoxInfo, self.moviedb[selection[1]]["Title"], self.moviedb[selection[1]]["Plot"])
 			self.session.open(MessageBox, _("Title:\n") + self.moviedb[selection[1]]["Title"] + _("\n\nPlot:\n") + self.moviedb[selection[1]]["Plot"], type = MessageBox.TYPE_INFO)
 
+	def KeyPlugins(self):
+		pluginList = []
+		plugins = getPlugins(where=Plugin.MENU_MOVIES_PLUGINS)
+		for plugin in plugins:
+			pluginList.append((plugin.name, plugin.start, ))
+		
+		if len(pluginList) == 0:
+			pluginList.append((_("No plugins available"), None, ))
+		
+		self.session.openWithCallback(self.KeyPluginsConfirmed, ChoiceBox, title=_("Plugins available"), list=pluginList)
+
+	def KeyPluginsConfirmed(self, choice):
+		if choice is None or choice[1] is None:
+			return
+		
+		selection = self["listview"].getCurrent()
+		if selection is not None and type(selection) != bool:
+			self.session.open(choice[1], self.moviedb[selection[1]])
 
 registerPlugin(Plugin(name=_("Movies"), start=PVMC_Movies, where=Plugin.MENU_VIDEOS))
