@@ -61,7 +61,7 @@ class DMC_SubtitleDownloader(ChoiceBox):
 		
 		self.tmp_sub_dir = "/tmp/subdir"
 		try:
-			os.removedirs(str(self.tmp_sub_dir))
+			shutil.rmtree(str(self.tmp_sub_dir))
 		except:
 			pass
 		os.mkdir(str(self.tmp_sub_dir))
@@ -108,7 +108,7 @@ class DMC_SubtitleDownloader(ChoiceBox):
 				print e
 		#xbmc.Player().setSubtitles(file_to)
 		try:
-			os.removedirs(str(self.tmp_sub_dir))
+			shutil.rmtree(str(self.tmp_sub_dir))
 		except:
 			pass
 		self.close()
@@ -141,6 +141,8 @@ class DMC_SubtitleDownloader(ChoiceBox):
 						if os.path.splitext( zip_entry )[1] in exts:
 							movie_sub = True
 					print "a",subtitle_file, file_path
+					shutil.copy(subtitle_file, file_path)
+					subtitle_set = True
 					#if ( movie_sub or len(files) < 2 or int(episode) == int(self.episode) ):
 					#	subtitle_set,file_path = self.copy_files( subtitle_file, file_path )
 			
@@ -148,11 +150,11 @@ class DMC_SubtitleDownloader(ChoiceBox):
 				for zip_entry in files:
 					if os.path.splitext( zip_entry )[1] in exts:
 						subtitle_file, file_path = self.create_name(zip_entry,sub_filename,subtitle_lang)
-						print "b", subtitle_file, file_path
+						shutil.copy(subtitle_file, file_path)
 						#subtitle_set,file_path  = self.copy_files( subtitle_file, file_path )            
 
 		try:
-			os.removedirs(str(self.tmp_sub_dir))
+			shutil.rmtree(str(self.tmp_sub_dir))
 		except:
 			pass
       #xbmc.Player().setSubtitles(file_path)
