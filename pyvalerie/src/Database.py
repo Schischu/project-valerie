@@ -11,7 +11,7 @@ from   FailedEntry       import FailedEntry
 import Genres
 from   MediaInfo         import MediaInfo
 import Utf8
-
+from   db_handler import db_handler
 from Plugins.Extensions.ProjectValerie.__common__ import printl2 as printl
 
 #------------------------------------------------------------------------------------------
@@ -39,49 +39,53 @@ class Database(object):
 		self.load()
 
 	def transformGenres(self):
-		for key in self.dbMovies:
-			transformedGenre = ""
-			for genre in self.dbMovies[key].Genres.split("|"):
-				if Genres.isGenre(genre) is False:
-					newGenre = Genres.getGenre(genre)
-					if newGenre != "Unknown":
-						printl("GENRE: " + str(genre) + " -> " + str(newGenre), self)
-						transformedGenre += newGenre + u"|"
-				else:
-					transformedGenre += genre + u"|"
-			if len(transformedGenre) > 0:
-				transformedGenre = transformedGenre[:len(transformedGenre) - 1] # Remove the last pipe
-			self.dbMovies[key].Genres = transformedGenre
-		
-		for key in self.dbSeries:
-			transformedGenre = ""
-			for genre in self.dbSeries[key].Genres.split("|"):
-				if Genres.isGenre(genre) is False:
-					newGenre = Genres.getGenre(genre)
-					if newGenre != "Unknown":
-						printl("GENRE: " + str(genre) + " -> " + str(newGenre), self)
-						transformedGenre += newGenre + u"|"
-				else:
-					transformedGenre += genre + u"|"
-			if len(transformedGenre) > 0:
-				transformedGenre = transformedGenre[:len(transformedGenre) - 1] # Remove the last pipe
-			self.dbSeries[key].Genres = transformedGenre
+		if Config.getBoolean("sqlite") is True:
+			db = db_handler()
+			db.queryMultipleRows("SELECT DISTINCT genre_text from genres")
+		else:  
+			for key in self.dbMovies:
+				transformedGenre = ""
+				for genre in self.dbMovies[key].Genres.split("|"):
+					if Genres.isGenre(genre) is False:
+						newGenre = Genres.getGenre(genre)
+						if newGenre != "Unknown":
+							printl("GENRE: " + str(genre) + " -> " + str(newGenre), self)
+							transformedGenre += newGenre + u"|"
+					else:
+						transformedGenre += genre + u"|"
+				if len(transformedGenre) > 0:
+					transformedGenre = transformedGenre[:len(transformedGenre) - 1] # Remove the last pipe
+				self.dbMovies[key].Genres = transformedGenre
 			
-			if key in self.dbEpisodes:
-				for season in self.dbEpisodes[key]:
-					for episode in self.dbEpisodes[key][season]:
-						transformedGenre = ""
-						for genre in self.dbEpisodes[key][season][episode].Genres.split("|"):
-							if Genres.isGenre(genre) is False:
-								newGenre = Genres.getGenre(genre)
-								if newGenre != "Unknown":
-									printl("GENRE: " + str(genre) + " -> " + str(newGenre), self)
-									transformedGenre += newGenre + u"|"
-							else:
-								transformedGenre += genre + u"|"
-						if len(transformedGenre) > 0:
-							transformedGenre = transformedGenre[:len(transformedGenre) - 1] # Remove the last pipe
-						self.dbEpisodes[key][season][episode].Genres = transformedGenre
+			for key in self.dbSeries:
+				transformedGenre = ""
+				for genre in self.dbSeries[key].Genres.split("|"):
+					if Genres.isGenre(genre) is False:
+						newGenre = Genres.getGenre(genre)
+						if newGenre != "Unknown":
+							printl("GENRE: " + str(genre) + " -> " + str(newGenre), self)
+							transformedGenre += newGenre + u"|"
+					else:
+						transformedGenre += genre + u"|"
+				if len(transformedGenre) > 0:
+					transformedGenre = transformedGenre[:len(transformedGenre) - 1] # Remove the last pipe
+				self.dbSeries[key].Genres = transformedGenre
+				
+				if key in self.dbEpisodes:
+					for season in self.dbEpisodes[key]:
+						for episode in self.dbEpisodes[key][season]:
+							transformedGenre = ""
+							for genre in self.dbEpisodes[key][season][episode].Genres.split("|"):
+								if Genres.isGenre(genre) is False:
+									newGenre = Genres.getGenre(genre)
+									if newGenre != "Unknown":
+										printl("GENRE: " + str(genre) + " -> " + str(newGenre), self)
+										transformedGenre += newGenre + u"|"
+								else:
+									transformedGenre += genre + u"|"
+							if len(transformedGenre) > 0:
+								transformedGenre = transformedGenre[:len(transformedGenre) - 1] # Remove the last pipe
+							self.dbEpisodes[key][season][episode].Genres = transformedGenre
 
 	def clearFailed(self):
 		try:

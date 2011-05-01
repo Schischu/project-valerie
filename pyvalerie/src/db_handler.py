@@ -3,7 +3,28 @@ import Config
 
 from sqlite3 import dbapi2 as sqlite
 #------------------------------------------------------------------------------------------
-#if Config.getBoolean("sqlite") is True      
+#if Config.getBoolean("sqlite") is True   
+"""
+schischu@ufs910 22:02 
+du kennst doch die mediainfo.py oder?
+
+Don Davici 22:02 
+yep
+
+schischu@ufs910 22:02 
+momentan ist das so das das eine mischung aus den variablen titel usw ist, sowei den methoden parse usw
+meiner meinung wäre es sinnvoller wenn das in 2 classen aufgetrennt würde
+
+schischu@ufs910 22:03 
+sprich class MediaInfo die nur die Variablen beinhaltet die auch in der txd abgespeichert werden.
+und class MediaInfoHelper das die Methoden beinhaltet
+denke das würde auch in hinblick sql einiges erleichter
+
+schischu@ufs910 22:04 
+"hoffe" ich
+was hältst du davon ?
+
+"""   
 #------------------------------------------------------------------------------------------
 
 class db_handler(object):
@@ -35,11 +56,12 @@ class db_handler(object):
         
         return connection
 
-    ##
-    # Executes a single query
-    # @param sqlStatement: complete SQL Statement
-    # @return: True for OK or False for Error
-    def singleQuery(self, sqlSatement):
+    ## returns true if recordcount is > 0 else false
+    def queryIfExists(self):
+        pass
+
+    ## executes the given insert statement
+    def queryInsert(self, sqlSatement):
         connection = self.OpenDatabase()
         if connection is not None:
             try:
@@ -52,10 +74,7 @@ class db_handler(object):
             except sqlite.IntegrityError:
                 return False 
 
-    ##
-    # Executes a query and returns a result list element
-    # @param sqlStatement: complete SQL Statement
-    # @return: list element
+    ## returns array with display-member and value-member
     def queryToList(self, sqlSatement):
         connection = self.OpenDatabase()
         if connection is not None:
@@ -71,11 +90,8 @@ class db_handler(object):
         else:
             return None
     
-    ##
-    # Executes a query and returns one single value
-    # @param sqlStatement: complete SQL Statement
-    # @return: row[0]
-    def executeScalar(self, sqlSatement):
+    ## returns the first value of the first row
+    def querySingleValue(self, sqlSatement):
         connection = self.OpenDatabase()
         if connection is not None:
             cursor = connection.cursor()
@@ -87,3 +103,40 @@ class db_handler(object):
             return row[0]
         else:
             return None   
+    
+
+    def querySingleRow(self, sqlSatement):
+        connection = self.OpenDatabase()
+        if connection is not None:
+            connection.text_factory = str
+            cursor = connection.cursor()
+            result_list = []
+            cursor.execute(sqlSatement)
+            for row in cursor:
+                result_list.append((row[1], row[0]))
+            cursor.close()  
+            connection.close()
+            return result_list
+        else:
+            return None
+        
+
+    def queryMultipleRows(self, sqlSatement):
+        connection = self.OpenDatabase()
+        if connection is not None:
+            cursor = connection.cursor()
+            result_list = []
+            cursor.execute(sqlSatement)
+            for row in cursor:
+                result_list.append((row[1], row[0]))
+            cursor.close()  
+            connection.close()
+            return result_list
+        else:
+            return None
+    
+    ## returns the count of returned rows      
+    def queryGetRecordCount(self):
+        $db = sqlite_open('mysqlitedb');
+        $result = sqlite_query($db, "SELECT * FROM mytable WHERE name='John Doe'");
+        $rows = sqlite_num_rows($result);
