@@ -8,6 +8,10 @@ import os
 import re
 import struct
 
+#+++
+from Plugins.Extensions.ProjectValerie.__common__ import printl2 as printl
+#+++
+
 #---
 #-__scriptname__ = sys.modules[ "__main__" ].__scriptname__
 #---
@@ -18,7 +22,7 @@ def log(module,msg):
 #---
 #-  xbmc.output("### [%s-%s] - %s" % (__scriptname__,module,msg,),level=xbmc.LOGDEBUG )
 #+++
-  print "### [%s-%s] - %s" % ("",module,msg,)
+  printl(msg, module, "D")
 #+++ 
 
 ###-------------------------  Hash  -----------------###############

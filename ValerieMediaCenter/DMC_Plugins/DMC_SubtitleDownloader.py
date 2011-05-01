@@ -1,18 +1,13 @@
 # -*- coding: utf-8 -*-
 
-
 import os
 import shutil
 import sys
-
-
 
 from Components.config import config
 from Components.config import ConfigSelection
 from Components.config import ConfigSubsection
 from Screens.ChoiceBox import ChoiceBox
-
-from DMC_SubtitleDownloaderExtras.utilities import *
 
 from Plugins.Extensions.ProjectValerie.__common__ import printl2 as printl
 from Plugins.Extensions.ProjectValerie.__plugin__ import Plugin, registerPlugin
@@ -29,18 +24,17 @@ except:
 gAvailable = False
 try:
 	from Plugins.Extensions.ProjectValerieSync.Utf8 import *
+	from DMC_SubtitleDownloaderExtras.utilities import *
 	sys.path.append(config.plugins.pvmc.pluginfolderpath.value + "DMC_Plugins/DMC_SubtitleDownloaderExtras")
 	gAvailable = True
 except:
-	printl("Is not available", "DMC_SubtitleDownloader")
+	printl("Is not available", "DMC_SubtitleDownloader", "E")
 	gAvailable = False
 
 config.plugins.pvmc.plugins.subdown          = ConfigSubsection()
-
 if gAvailable:
 	langs = []
 	langs.append("None")
-	
 	for i in range(0, 43):
 		langs.append(toScriptLang(str(i)))
 	langs.append("All")
@@ -69,8 +63,10 @@ class DMC_SubtitleDownloader(ChoiceBox):
 
 	def __init__(self, session, args):
 		self.session = session
-		
 		self.service = config.plugins.pvmc.plugins.subdown.provider.value
+		self.language_1 = config.plugins.pvmc.plugins.subdown.language1.value
+		self.language_2 = config.plugins.pvmc.plugins.subdown.language2.value
+		self.language_3 = config.plugins.pvmc.plugins.subdown.language3.value
 		
 		year = str(args["Year"])
 		title = args["Title"] # + " (" + str(year) + ")"
@@ -82,33 +78,27 @@ class DMC_SubtitleDownloader(ChoiceBox):
 			season = ""
 			episode = ""
 			tvshow = ""
-		
-		
-		self.language_1 = config.plugins.pvmc.plugins.subdown.language1.value
-		self.language_2 = config.plugins.pvmc.plugins.subdown.language2.value
-		self.language_3 = config.plugins.pvmc.plugins.subdown.language3.value
-		
 		self.file_original_path = args["Path"]
+		
 		set_temp = False
 		rar = False
 		
 		self.tmp_sub_dir = "/tmp/subdir"
 		try:
 			shutil.rmtree(str(self.tmp_sub_dir))
-		except:
-			pass
+		except Exception, ex:
+			printl("Exception: " + str(ex), __name__, "E")
 		os.mkdir(str(self.tmp_sub_dir))
 		self.sub_folder = self.file_original_path.rsplit("/", 1)[0]
 		
 		exec ( "from DMC_SubtitleDownloaderExtras.services.%s import service as Service" % (self.service))
 		self.Service = Service
-		print "searching sub for", self.file_original_path
+		printl("Searching sub for " + str(self.file_original_path), self, "I")
 		self.subtitles_list, self.session_id, msg = self.Service.search_subtitles( self.file_original_path, title, tvshow, year, season, episode, set_temp, rar, self.language_1, self.language_2, self.language_3 )
-		
 		
 		subtitleList = []
 		for subtitle in self.subtitles_list:
-			print subtitle
+			printl("Subtitle: " + str(subtitle), self, "D")
 			lang = ""
 			if subtitle.has_key("language_id"):
 				lang = utf8ToLatin(subtitle["language_id"])
@@ -119,37 +109,32 @@ class DMC_SubtitleDownloader(ChoiceBox):
 		ChoiceBox.__init__(self, self.session, list = subtitleList, title = self.file_original_path)
 
 	def Download_Subtitles(self, subtitle):
-		print "subtitle", subtitle[3]
+		printl("Subtitle: " + str(subtitle[3]), self, "D")
 		fakeSubtitleList = []
 		fakeSubtitleList.append(subtitle[3])
 		zip_subs = os.path.join( self.tmp_sub_dir, "zipsubs.zip")
 		zipped, language, file = self.Service.download_subtitles(fakeSubtitleList, 0, zip_subs, self.tmp_sub_dir, self.sub_folder,self.session_id)
 		sub_lang = str(toOpenSubtitles_two(language))
-		print "zipped", zipped
-		print "language", language
-		print "file", file
+		printl("zipped: " + str(zipped), self, "D")
+		printl("language: " + str(language), self, "D")
+		printl("file: " + str(file), self, "D")
 		
 		if zipped :
 			self.Extract_Subtitles(zip_subs, sub_lang)
 		else:
 			sub_ext  = os.path.splitext( file )[1]
 			sub_name = os.path.splitext( os.path.basename( self.file_original_path ) )[0]
-			#if (__settings__.getSetting( "lang_to_end" ) == "true"):
 			file_name = "%s.%s%s" % ( sub_name, sub_lang, sub_ext )
-			#else:
-			#	file_name = "%s%s" % ( sub_name, sub_ext )
 			file_from = file.replace('\\','/')
 			file_to = os.path.join(self.sub_folder, file_name).replace('\\','/')
 			try:
-				print "c", file_from, file_to
 				shutil.copyfile(file_from, file_to)
-			except IOError, e:
-				print e
-		#xbmc.Player().setSubtitles(file_to)
+			except IOError, ex:
+				printl("IOError: " + str(ex), __name__, "E")
 		try:
 			shutil.rmtree(str(self.tmp_sub_dir))
-		except:
-			pass
+		except Exception, ex:
+			printl("Exception: " + str(ex), __name__, "E")
 		self.close()
 
 	def Extract_Subtitles( self, zip_subs, subtitle_lang ):
@@ -159,12 +144,12 @@ class DMC_SubtitleDownloader(ChoiceBox):
 		sub_filename = os.path.basename( self.file_original_path )
 		exts = [".srt", ".sub", ".txt", ".smi", ".ssa", ".ass" ]
 		if have_unzip and len(files) < 1 :
-			print "len(files) < 1"
+			printl("len(files) < 1", self, "W")
 		else :
 			if have_unzip:
 				un.extract( zip_subs, self.tmp_sub_dir )
 			else:
-				print "unzip " + str(zip_subs) + " -d " + str(self.tmp_sub_dir)
+				printl("unzip " + str(zip_subs) + " -d " + str(self.tmp_sub_dir), self, "D")
 				os.system("unzip " + str(zip_subs) + " -d " + str(self.tmp_sub_dir))
 				files = os.listdir(str(self.tmp_sub_dir))
 			subtitle_set = False
@@ -174,16 +159,17 @@ class DMC_SubtitleDownloader(ChoiceBox):
 				if os.path.splitext( zip_entry )[1] in exts:
 					subtitle_file, file_path = self.create_name(zip_entry,sub_filename,subtitle_lang)
 					if False: #len(self.tvshow) > 0:
-						#title, season, episode = regex_tvshow(False, zip_entry)
+						title, season, episode = regex_tvshow(False, zip_entry)
 						if not episode : episode = -1
 					else:
 						if os.path.splitext( zip_entry )[1] in exts:
 							movie_sub = True
-					print "a",subtitle_file, file_path
 					shutil.copy(subtitle_file, file_path)
 					subtitle_set = True
 					#if ( movie_sub or len(files) < 2 or int(episode) == int(self.episode) ):
-					#	subtitle_set,file_path = self.copy_files( subtitle_file, file_path )
+					#	shutil.copy(subtitle_file, file_path)
+					#	subtitle_set = True
+					#	#subtitle_set,file_path = self.copy_files( subtitle_file, file_path )
 			
 			if not subtitle_set:
 				for zip_entry in files:
@@ -194,8 +180,8 @@ class DMC_SubtitleDownloader(ChoiceBox):
 		
 		try:
 			shutil.rmtree(str(self.tmp_sub_dir))
-		except:
-			pass
+		except Exception, ex:
+			printl("Exception: " + str(ex), __name__, "E")
 
 	def create_name(self,zip_entry,sub_filename,subtitle_lang):
 		sub_ext  = os.path.splitext( zip_entry )[1]
@@ -212,7 +198,6 @@ def autostart(session):
 	global gsubdown
 
 if gAvailable is True:
-	printl("Is available", __name__)
 	registerPlugin(Plugin(name=_("SubtitleDownloader"), fnc=settings, where=Plugin.SETTINGS))
 	#registerPlugin(Plugin(name=_("SubtitleDownloader"), fnc=autostart, where=Plugin.AUTOSTART))
 	registerPlugin(Plugin(name=_("Download subtitles"), start=DMC_SubtitleDownloader, where=Plugin.MENU_MOVIES_PLUGINS))

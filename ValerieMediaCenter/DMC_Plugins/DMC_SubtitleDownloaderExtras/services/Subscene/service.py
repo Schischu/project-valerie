@@ -266,6 +266,8 @@ def download_subtitles (subtitles_list, pos, zip_subs, tmp_sub_dir, sub_folder, 
 #-                                xbmc.executebuiltin("XBMC.Extract(" + local_tmp_file + "," + tmp_sub_dir +")")
 #+++
                                 print "XBMC.Extract(" + local_tmp_file + "," + tmp_sub_dir +")"
+                                print "unzip " + str(local_tmp_file) + " -d " + str(tmp_sub_dir)
+                                os.system("unzip " + str(local_tmp_file) + " -d " + str(tmp_sub_dir))
 #+++
                                 waittime  = 0
                                 while (filecount == init_filecount) and (waittime < 20) and (init_max_mtime == max_mtime): # nothing yet extracted
