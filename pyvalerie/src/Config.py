@@ -16,6 +16,7 @@ def load():
 			f = open("/hdd/valerie/valerie.conf", "w")
 			f.write("local=en\n")
 			f.write("delete=true\n")
+			f.write("sqlite=false\n")
 			f.close()
 			printl("\t- Created", __name__)
 		else:
